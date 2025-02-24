@@ -2,41 +2,50 @@
 use prei::Ts;
 
 #[derive(Ts)]
-struct Primitives {
-    num: i32,
-    str: String,
-    nil: (),
+struct OrderId(u64);
+
+#[derive(Ts)]
+struct User {
+    id: u64,
+    name: String,
 }
 
 #[derive(Ts)]
-struct Reference {
-    app: Primitives,
+enum Event {
+    Navigate(String),
+    Message {
+        user_id: u64,
+        message: String,
+    },
+    Exit,
 }
-
-/// [string,number,boolean]
-#[derive(Ts)]
-struct Tuple(String,usize,bool);
-
-/// string[]
-#[derive(Ts)]
-struct Wraped(Vec<String>);
 
 const OUTPUT: &str = "\
-export type Primitives = {
-  num: number,
-  str: string,
-  nil: null,
+export type OrderId = number;
+export type User = {
+  id: number,
+  name: string,
 };
-export type Reference = {
-  app: Primitives,
-};
-export type Tuple = [string,number,boolean,];
-export type Wraped = string[];
+export type Event =
+  | {
+    tag: \"Navigate\",
+    value: string
+  } | {
+    tag: \"Message\",
+    value: {
+      user_id: number,
+      message: string,
+    }
+  } | {
+    tag: \"Exit\",
+    value: null
+  };
 ";
 
 fn main() {
-    let result = prei::generate_type!(Primitives,Reference,Tuple,Wraped);
-    assert_eq!(&result,OUTPUT);
+    let result = prei::generate_type!(OrderId,User,Event);
+    assert_eq!(result,OUTPUT);
     println!("{result}");
 }
+
 
