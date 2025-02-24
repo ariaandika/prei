@@ -13,6 +13,26 @@ pub trait TsType {
     }
 }
 
+impl<T: TsType> TsType for &T {
+    fn gen_id_to(buffer: &mut String) {
+        T::gen_id_to(buffer);
+    }
+
+    fn gen_type_to(buffer: &mut String) {
+        T::gen_type_to(buffer);
+    }
+}
+
+impl<T: TsType> TsType for &mut T {
+    fn gen_id_to(buffer: &mut String) {
+        T::gen_id_to(buffer);
+    }
+
+    fn gen_type_to(buffer: &mut String) {
+        T::gen_type_to(buffer);
+    }
+}
+
 impl TsType for () {
     fn gen_id_to(buffer: &mut String) {
         buffer.push_str("null");
