@@ -13,7 +13,7 @@ pub trait TsType {
     }
 }
 
-impl<T: TsType> TsType for &T {
+impl<T: TsType + ?Sized> TsType for &T {
     fn gen_id_to(buffer: &mut String) {
         T::gen_id_to(buffer);
     }
@@ -23,7 +23,7 @@ impl<T: TsType> TsType for &T {
     }
 }
 
-impl<T: TsType> TsType for &mut T {
+impl<T: TsType + ?Sized> TsType for &mut T {
     fn gen_id_to(buffer: &mut String) {
         T::gen_id_to(buffer);
     }
