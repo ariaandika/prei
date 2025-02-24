@@ -90,7 +90,7 @@ fn parse_enum(DeriveInput { ident, data, generics, .. }: DeriveInput) -> Result<
     let Data::Enum(data) = data else { unreachable!("matched") };
     let (g1,g2,g3) = generics.split_for_impl();
     let ident_str = ident.to_string();
-    let head = format!("export type {ident_str} = ");
+    let head = format!("export type {ident_str} =\n ");
 
     let generated = data.variants.into_iter().map(|variant| {
         match &variant.fields {
@@ -110,20 +110,20 @@ fn parse_enum(DeriveInput { ident, data, generics, .. }: DeriveInput) -> Result<
                         }
                     });
 
-                let head = format!("  | {{\n    tag: {:?},\n    value: {{",variant.ident);
+                let head = format!(" | {{\n    tag: \"{}\",\n    value: {{",variant.ident);
                 quote! {
                     buffer.push_str(#head);
                     #(#fields)*
-                    buffer.push_str("    }\n  }\n");
+                    buffer.push_str("    }\n  }");
                 }
             },
             Fields::Unnamed(fields) if fields.unnamed.len() == 1 => {
                 let ty = fields.unnamed.first().expect("one");
-                let head = format!("  | {{\n    tag: {:?},\n    value: ",variant.ident);
+                let head = format!(" | {{\n    tag: \"{}\",\n    value: ",variant.ident);
                 quote! {
                     buffer.push_str(#head);
                     <#ty as #TsType>::gen_id_to(buffer);
-                    buffer.push_str("\n  }\n");
+                    buffer.push_str("\n  }");
                 }
             },
             Fields::Unnamed(fields) => {
@@ -134,15 +134,15 @@ fn parse_enum(DeriveInput { ident, data, generics, .. }: DeriveInput) -> Result<
                         buffer.push_str(",");
                     }
                 });
-                let head = format!("  | {{\n    tag: {:?},\n    value: [",variant.ident);
+                let head = format!(" | {{\n    tag: \"{}\",\n    value: [",variant.ident);
                 quote! {
                     buffer.push_str(#head);
                     #(#fields)*;
-                    buffer.push_str("]\n  }\n");
+                    buffer.push_str("]\n  }");
                 }
             }
             Fields::Unit => {
-                let head = format!("  | {{\n    tag: {:?},\n    value: null\n  }}\n",variant.ident);
+                let head = format!(" | {{\n    tag: \"{}\",\n    value: null\n  }}",variant.ident);
                 quote! {
                     buffer.push_str(#head);
                 }
@@ -160,6 +160,7 @@ fn parse_enum(DeriveInput { ident, data, generics, .. }: DeriveInput) -> Result<
             fn gen_type_to(buffer: &mut String) {
                 buffer.push_str(#head);
                 #(#generated)*
+                buffer.push_str(";\n");
             }
         }
     })
