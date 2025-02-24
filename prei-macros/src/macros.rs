@@ -28,7 +28,7 @@ fn parse_struct(data: DataStruct, input: DeriveInput) -> Result<TokenStream> {
                         buffer.push_str("  ");
                         buffer.push_str(#id);
                         buffer.push_str(": ");
-                        <#ty as ::prei::Type>::generate(&mut buffer);
+                        <#ty as ::prei::Type>::gen_type_to(buffer);
                         buffer.push_str(",\n");
                     }
                 });
@@ -42,7 +42,7 @@ fn parse_struct(data: DataStruct, input: DeriveInput) -> Result<TokenStream> {
         Fields::Unnamed(fields) if fields.unnamed.len() == 1 => {
             let ty = fields.unnamed.first().expect("one");
             quote! {
-                <#ty as ::prei::Type>::generate(&mut buffer);
+                <#ty as ::prei::Type>::gen_type_to(buffer);
                 buffer.push_str(";\n");
             }
         },
@@ -50,7 +50,7 @@ fn parse_struct(data: DataStruct, input: DeriveInput) -> Result<TokenStream> {
             let fields = fields.unnamed.iter().map(|e|{
                 let ty = &e.ty;
                 quote! {
-                    <#ty as ::prei::Type>::generate(&mut buffer);
+                    <#ty as ::prei::Type>::gen_type_to(buffer);
                     buffer.push_str(",");
                 }
             });
@@ -66,18 +66,17 @@ fn parse_struct(data: DataStruct, input: DeriveInput) -> Result<TokenStream> {
     Ok(quote! {
         #[cfg(debug_assertions)]
         impl ::prei::Type for #ident {
-            fn generate(buffer: &mut String) {
+            fn gen_type_to(buffer: &mut String) {
                 buffer.push_str(#ident_str);
             }
         }
         #[cfg(debug_assertions)]
         impl ::prei::Interface for #ident {
-            fn generate() -> String {
-                let mut buffer = String::from("export type ");
+            fn gen_interface_to(buffer: &mut String) {
+                buffer.push_str("export type ");
                 buffer.push_str(#ident_str);
                 buffer.push_str(" = ");
                 #generated;
-                buffer
             }
         }
     })

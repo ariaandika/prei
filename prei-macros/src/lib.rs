@@ -20,7 +20,7 @@ pub fn generate(input: TokenStream) -> TokenStream {
             let ty = ty.iter();
             quote! {{
                 let mut output = String::new();
-                #(output += &<#ty as ::prei::Interface>::generate();)*
+                #(<#ty as ::prei::Interface>::gen_interface_to(&mut output);)*
                 output
             }}.into()
         },

@@ -1,22 +1,34 @@
 
 pub trait Type {
     /// generate an Id when referenced in a field
-    fn generate(buffer: &mut String);
+    fn gen_type_to(buffer: &mut String);
+
+    fn gen_type() -> String {
+        let mut buffer = String::new();
+        Self::gen_type_to(&mut buffer);
+        buffer
+    }
 }
 
 pub trait Interface {
     /// generate the whole typescript interface
-    fn generate() -> String;
+    fn gen_interface_to(buffer: &mut String);
+
+    fn gen_interface() -> String {
+        let mut buffer = String::new();
+        Self::gen_interface_to(&mut buffer);
+        buffer
+    }
 }
 
 impl Type for () {
-    fn generate(buffer: &mut String) {
+    fn gen_type_to(buffer: &mut String) {
         buffer.push_str("null");
     }
 }
 
 impl Type for bool {
-    fn generate(buffer: &mut String) {
+    fn gen_type_to(buffer: &mut String) {
         buffer.push_str("boolean");
     }
 }
@@ -24,7 +36,7 @@ impl Type for bool {
 macro_rules! impl_number {
     ($n:ty) => {
         impl Type for $n {
-            fn generate(buffer: &mut String) {
+            fn gen_type_to(buffer: &mut String) {
                 buffer.push_str("number");
             }
         }
@@ -34,7 +46,7 @@ macro_rules! impl_number {
 macro_rules! impl_string {
     ($n:ty) => {
         impl Type for $n {
-            fn generate(buffer: &mut String) {
+            fn gen_type_to(buffer: &mut String) {
                 buffer.push_str("string");
             }
         }
@@ -44,8 +56,8 @@ macro_rules! impl_string {
 macro_rules! impl_array {
     ($n:ty) => {
         impl<T: Type> Type for $n {
-            fn generate(buffer: &mut String) {
-                T::generate(buffer);
+            fn gen_type_to(buffer: &mut String) {
+                T::gen_type_to(buffer);
                 buffer.push_str("[]");
             }
         }
@@ -55,11 +67,11 @@ macro_rules! impl_array {
 macro_rules! impl_map {
     ($n:ty) => {
         impl<T: Type, U: Type> Type for $n {
-            fn generate(buffer: &mut String) {
+            fn gen_type_to(buffer: &mut String) {
                 buffer.push_str("Record<");
-                T::generate(buffer);
+                T::gen_type_to(buffer);
                 buffer.push(',');
-                U::generate(buffer);
+                U::gen_type_to(buffer);
                 buffer.push('>');
             }
         }
@@ -69,8 +81,8 @@ macro_rules! impl_map {
 macro_rules! impl_wrapper {
     ($n:ty) => {
         impl<T: Type> Type for $n {
-            fn generate(buffer: &mut String) {
-                T::generate(buffer);
+            fn gen_type_to(buffer: &mut String) {
+                T::gen_type_to(buffer);
             }
         }
     };
@@ -106,8 +118,8 @@ impl_wrapper!(std::sync::Mutex<T>);
 impl_wrapper!(std::sync::RwLock<T>);
 
 impl<T: Type> Type for Option<T> {
-    fn generate(buffer: &mut String) {
-        T::generate(buffer);
+    fn gen_type_to(buffer: &mut String) {
+        T::gen_type_to(buffer);
         buffer.push_str(" | null");
     }
 }
