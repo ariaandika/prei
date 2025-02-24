@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 
 pub trait Type {
     /// generate an Id when referenced in a field
@@ -32,6 +31,51 @@ macro_rules! impl_number {
     };
 }
 
+macro_rules! impl_string {
+    ($n:ty) => {
+        impl Type for $n {
+            fn generate(buffer: &mut String) {
+                buffer.push_str("string");
+            }
+        }
+    };
+}
+
+macro_rules! impl_array {
+    ($n:ty) => {
+        impl<T: Type> Type for $n {
+            fn generate(buffer: &mut String) {
+                T::generate(buffer);
+                buffer.push_str("[]");
+            }
+        }
+    };
+}
+
+macro_rules! impl_map {
+    ($n:ty) => {
+        impl<T: Type, U: Type> Type for $n {
+            fn generate(buffer: &mut String) {
+                buffer.push_str("Record<");
+                T::generate(buffer);
+                buffer.push(',');
+                U::generate(buffer);
+                buffer.push('>');
+            }
+        }
+    };
+}
+
+macro_rules! impl_wrapper {
+    ($n:ty) => {
+        impl<T: Type> Type for $n {
+            fn generate(buffer: &mut String) {
+                T::generate(buffer);
+            }
+        }
+    };
+}
+
 impl_number!(u8);
 impl_number!(u16);
 impl_number!(u32);
@@ -41,34 +85,30 @@ impl_number!(i8);
 impl_number!(i16);
 impl_number!(i32);
 impl_number!(i64);
+impl_number!(isize);
+impl_number!(f32);
+impl_number!(f64);
 
-impl Type for String {
-    fn generate(buffer: &mut String) {
-        buffer.push_str("string");
-    }
-}
+impl_string!(char);
+impl_string!(str);
+impl_string!(String);
 
-impl<T: Type> Type for [T] {
+impl_array!([T]);
+impl_array!(Vec<T>);
+impl_array!(std::collections::VecDeque<T>);
+
+impl_map!(std::collections::HashMap<T,U>);
+impl_map!(std::collections::BTreeMap<T,U>);
+
+impl_wrapper!(Box<T>);
+impl_wrapper!(std::sync::Arc<T>);
+impl_wrapper!(std::sync::Mutex<T>);
+impl_wrapper!(std::sync::RwLock<T>);
+
+impl<T: Type> Type for Option<T> {
     fn generate(buffer: &mut String) {
         T::generate(buffer);
-        buffer.push_str("[]");
-    }
-}
-
-impl<T: Type> Type for Vec<T> {
-    fn generate(buffer: &mut String) {
-        T::generate(buffer);
-        buffer.push_str("[]");
-    }
-}
-
-impl<T: Type, U: Type> Type for HashMap<T,U> {
-    fn generate(buffer: &mut String) {
-        buffer.push_str("Record<");
-        T::generate(buffer);
-        buffer.push(',');
-        U::generate(buffer);
-        buffer.push('>');
+        buffer.push_str(" | null");
     }
 }
 
