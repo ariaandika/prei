@@ -38,8 +38,8 @@ impl TsType for () {
         buffer.push_str("null");
     }
 
-    fn gen_type_to(buffer: &mut String) {
-        buffer.push_str("null");
+    fn gen_type_to(_buffer: &mut String) {
+        panic!("primitive null cannot generate type");
     }
 }
 
@@ -48,20 +48,19 @@ impl TsType for bool {
         buffer.push_str("boolean");
     }
 
-    fn gen_type_to(buffer: &mut String) {
-        buffer.push_str("boolean");
+    fn gen_type_to(_buffer: &mut String) {
+        panic!("primitive boolean cannot generate type");
     }
 }
 
 impl<T: TsType> TsType for Option<T> {
     fn gen_id_to(buffer: &mut String) {
-        T::gen_type_to(buffer);
+        T::gen_id_to(buffer);
         buffer.push_str(" | null");
     }
 
-    fn gen_type_to(buffer: &mut String) {
-        T::gen_type_to(buffer);
-        buffer.push_str(" | null");
+    fn gen_type_to(_buffer: &mut String) {
+        panic!("primitive nullable cannot generate type");
     }
 }
 
@@ -72,8 +71,8 @@ macro_rules! impl_number {
                 buffer.push_str("number");
             }
 
-            fn gen_type_to(buffer: &mut String) {
-                buffer.push_str("number");
+            fn gen_type_to(_buffer: &mut String) {
+                panic!("primitive number cannot generate type");
             }
         }
     };
@@ -86,8 +85,8 @@ macro_rules! impl_string {
                 buffer.push_str("string");
             }
 
-            fn gen_type_to(buffer: &mut String) {
-                buffer.push_str("string");
+            fn gen_type_to(_buffer: &mut String) {
+                panic!("primitive string cannot generate type");
             }
         }
     };
@@ -97,13 +96,12 @@ macro_rules! impl_array {
     ($n:ty) => {
         impl<T: TsType> TsType for $n {
             fn gen_id_to(buffer: &mut String) {
-                T::gen_type_to(buffer);
+                T::gen_id_to(buffer);
                 buffer.push_str("[]");
             }
 
-            fn gen_type_to(buffer: &mut String) {
-                T::gen_type_to(buffer);
-                buffer.push_str("[]");
+            fn gen_type_to(_buffer: &mut String) {
+                panic!("primitive array cannot generate type");
             }
         }
     };
@@ -114,18 +112,14 @@ macro_rules! impl_map {
         impl<T: TsType, U: TsType> TsType for $n {
             fn gen_id_to(buffer: &mut String) {
                 buffer.push_str("Record<");
-                T::gen_type_to(buffer);
+                T::gen_id_to(buffer);
                 buffer.push(',');
-                U::gen_type_to(buffer);
+                U::gen_id_to(buffer);
                 buffer.push('>');
             }
 
-            fn gen_type_to(buffer: &mut String) {
-                buffer.push_str("Record<");
-                T::gen_type_to(buffer);
-                buffer.push(',');
-                U::gen_type_to(buffer);
-                buffer.push('>');
+            fn gen_type_to(_buffer: &mut String) {
+                panic!("primitive object cannot generate type");
             }
         }
     };
@@ -135,7 +129,7 @@ macro_rules! impl_wrapper {
     ($n:ty) => {
         impl<T: TsType> TsType for $n {
             fn gen_id_to(buffer: &mut String) {
-                T::gen_type_to(buffer);
+                T::gen_id_to(buffer);
             }
 
             fn gen_type_to(buffer: &mut String) {
@@ -151,19 +145,14 @@ macro_rules! impl_tuple {
             fn gen_id_to(buffer: &mut String) {
                 buffer.push_str("[");
                 $(
-                    $t::gen_type_to(buffer);
+                    $t::gen_id_to(buffer);
                     buffer.push_str(",");
                 )*
                 buffer.push_str("]");
             }
 
-            fn gen_type_to(buffer: &mut String) {
-                buffer.push_str("[");
-                $(
-                    $t::gen_type_to(buffer);
-                    buffer.push_str(",");
-                )*
-                buffer.push_str("]");
+            fn gen_type_to(_buffer: &mut String) {
+                panic!("primitive tuple cannot generate type");
             }
         }
     };
