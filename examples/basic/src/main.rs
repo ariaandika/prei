@@ -2,27 +2,41 @@
 use prei::Ts;
 
 #[derive(Ts)]
-pub struct App {
-    pub id: i32,
-    pub name: String,
-    pub none: (),
+struct Primitives {
+    num: i32,
+    str: String,
+    nil: (),
 }
 
 #[derive(Ts)]
-pub struct Deez {
-    pub id: i32,
-    pub name: String,
-    pub app: App,
+struct Reference {
+    app: Primitives,
 }
 
+/// [string,number,boolean]
 #[derive(Ts)]
-pub struct Arr(String,usize,bool);
+struct Tuple(String,usize,bool);
 
+/// string[]
 #[derive(Ts)]
-pub struct Alias(Vec<String>);
+struct Wraped(Vec<String>);
+
+const OUTPUT: &str = "\
+export type Primitives = {
+  num: number,
+  str: string,
+  nil: null,
+};
+export type Reference = {
+  app: Primitives,
+};
+export type Tuple = [string,number,boolean,];
+export type Wraped = string[];
+";
 
 fn main() {
-    let result = prei::generate!(App);
+    let result = prei::generate!(Primitives,Reference,Tuple,Wraped);
+    assert_eq!(&result,OUTPUT);
     println!("{result}");
 }
 
