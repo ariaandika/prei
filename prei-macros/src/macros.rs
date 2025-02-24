@@ -11,8 +11,9 @@ pub fn parse_derive(input: DeriveInput) -> Result<TokenStream> {
     }
 }
 
-fn parse_struct(DeriveInput { ident, data, .. }: DeriveInput) -> Result<TokenStream> {
+fn parse_struct(DeriveInput { ident, data, generics, .. }: DeriveInput) -> Result<TokenStream> {
     let Data::Struct(data) = data else { unreachable!("matches") };
+    let (g1,g2,g3) = generics.split_for_impl();
     let ident_str = ident.to_string();
     let head = format!("export type {ident_str} = ");
 
@@ -73,7 +74,7 @@ fn parse_struct(DeriveInput { ident, data, .. }: DeriveInput) -> Result<TokenStr
 
     Ok(quote! {
         #[cfg(debug_assertions)]
-        impl #TsType for #ident {
+        impl #g1 #TsType for #ident #g2 #g3 {
             fn gen_id_to(buffer: &mut String) {
                 buffer.push_str(#ident_str);
             }
@@ -85,8 +86,9 @@ fn parse_struct(DeriveInput { ident, data, .. }: DeriveInput) -> Result<TokenStr
     })
 }
 
-fn parse_enum(DeriveInput { ident, data, .. }: DeriveInput) -> Result<TokenStream> {
+fn parse_enum(DeriveInput { ident, data, generics, .. }: DeriveInput) -> Result<TokenStream> {
     let Data::Enum(data) = data else { unreachable!("matched") };
+    let (g1,g2,g3) = generics.split_for_impl();
     let ident_str = ident.to_string();
     let head = format!("export type {ident_str} = ");
 
@@ -150,7 +152,7 @@ fn parse_enum(DeriveInput { ident, data, .. }: DeriveInput) -> Result<TokenStrea
 
     Ok(quote! {
         #[cfg(debug_assertions)]
-        impl #TsType for #ident {
+        impl #g1 #TsType for #ident #g2 #g3 {
             fn gen_id_to(buffer: &mut String) {
                 buffer.push_str(#ident_str);
             }
