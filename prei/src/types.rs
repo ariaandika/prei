@@ -1,6 +1,9 @@
 
-pub trait Type {
-    /// generate an Id when referenced in a field
+pub trait TsType {
+    /// generate an id for when it referenced in a field
+    fn gen_id_to(buffer: &mut String);
+
+    /// generate the whole typescript type
     fn gen_type_to(buffer: &mut String);
 
     fn gen_type() -> String {
@@ -10,30 +13,32 @@ pub trait Type {
     }
 }
 
-pub trait Interface {
-    /// generate the whole typescript interface
-    fn gen_interface_to(buffer: &mut String);
-
-    fn gen_interface() -> String {
-        let mut buffer = String::new();
-        Self::gen_interface_to(&mut buffer);
-        buffer
+impl TsType for () {
+    fn gen_id_to(buffer: &mut String) {
+        buffer.push_str("null");
     }
-}
 
-impl Type for () {
     fn gen_type_to(buffer: &mut String) {
         buffer.push_str("null");
     }
 }
 
-impl Type for bool {
+impl TsType for bool {
+    fn gen_id_to(buffer: &mut String) {
+        buffer.push_str("boolean");
+    }
+
     fn gen_type_to(buffer: &mut String) {
         buffer.push_str("boolean");
     }
 }
 
-impl<T: Type> Type for Option<T> {
+impl<T: TsType> TsType for Option<T> {
+    fn gen_id_to(buffer: &mut String) {
+        T::gen_type_to(buffer);
+        buffer.push_str(" | null");
+    }
+
     fn gen_type_to(buffer: &mut String) {
         T::gen_type_to(buffer);
         buffer.push_str(" | null");
@@ -42,7 +47,11 @@ impl<T: Type> Type for Option<T> {
 
 macro_rules! impl_number {
     ($n:ty) => {
-        impl Type for $n {
+        impl TsType for $n {
+            fn gen_id_to(buffer: &mut String) {
+                buffer.push_str("number");
+            }
+
             fn gen_type_to(buffer: &mut String) {
                 buffer.push_str("number");
             }
@@ -52,7 +61,11 @@ macro_rules! impl_number {
 
 macro_rules! impl_string {
     ($n:ty) => {
-        impl Type for $n {
+        impl TsType for $n {
+            fn gen_id_to(buffer: &mut String) {
+                buffer.push_str("string");
+            }
+
             fn gen_type_to(buffer: &mut String) {
                 buffer.push_str("string");
             }
@@ -62,7 +75,12 @@ macro_rules! impl_string {
 
 macro_rules! impl_array {
     ($n:ty) => {
-        impl<T: Type> Type for $n {
+        impl<T: TsType> TsType for $n {
+            fn gen_id_to(buffer: &mut String) {
+                T::gen_type_to(buffer);
+                buffer.push_str("[]");
+            }
+
             fn gen_type_to(buffer: &mut String) {
                 T::gen_type_to(buffer);
                 buffer.push_str("[]");
@@ -73,7 +91,15 @@ macro_rules! impl_array {
 
 macro_rules! impl_map {
     ($n:ty) => {
-        impl<T: Type, U: Type> Type for $n {
+        impl<T: TsType, U: TsType> TsType for $n {
+            fn gen_id_to(buffer: &mut String) {
+                buffer.push_str("Record<");
+                T::gen_type_to(buffer);
+                buffer.push(',');
+                U::gen_type_to(buffer);
+                buffer.push('>');
+            }
+
             fn gen_type_to(buffer: &mut String) {
                 buffer.push_str("Record<");
                 T::gen_type_to(buffer);
@@ -87,7 +113,11 @@ macro_rules! impl_map {
 
 macro_rules! impl_wrapper {
     ($n:ty) => {
-        impl<T: Type> Type for $n {
+        impl<T: TsType> TsType for $n {
+            fn gen_id_to(buffer: &mut String) {
+                T::gen_type_to(buffer);
+            }
+
             fn gen_type_to(buffer: &mut String) {
                 T::gen_type_to(buffer);
             }
@@ -97,7 +127,16 @@ macro_rules! impl_wrapper {
 
 macro_rules! impl_tuple {
     ($($t:tt),*) => {
-        impl<$($t: Type),*> Type for ($($t),*) {
+        impl<$($t: TsType),*> TsType for ($($t),*) {
+            fn gen_id_to(buffer: &mut String) {
+                buffer.push_str("[");
+                $(
+                    $t::gen_type_to(buffer);
+                    buffer.push_str(",");
+                )*
+                buffer.push_str("]");
+            }
+
             fn gen_type_to(buffer: &mut String) {
                 buffer.push_str("[");
                 $(

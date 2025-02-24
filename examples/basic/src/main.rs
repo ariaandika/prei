@@ -35,7 +35,7 @@ export type Wraped = string[];
 ";
 
 fn main() {
-    let result = prei::generate!(Primitives,Reference,Tuple,Wraped);
+    let result = prei::generate_type!(Primitives,Reference,Tuple,Wraped);
     assert_eq!(&result,OUTPUT);
     println!("{result}");
 }
