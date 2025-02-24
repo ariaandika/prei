@@ -21,3 +21,8 @@ pub struct Arr(String,usize,bool);
 #[derive(Ts)]
 pub struct Alias(Vec<String>);
 
+fn main() {
+    let result = prei::generate!(App);
+    println!("{result}");
+}
+
