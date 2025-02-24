@@ -102,7 +102,7 @@ fn parse_enum(DeriveInput { ident, data, generics, .. }: DeriveInput) -> Result<
                     .zip(&variant.fields)
                     .map(|(id, e)| {
                         let ty = &e.ty;
-                        let head = format!("    {id}: ");
+                        let head = format!("      {id}: ");
                         quote! {
                             buffer.push_str(#head);
                             <#ty as #TsType>::gen_id_to(buffer);
@@ -110,7 +110,7 @@ fn parse_enum(DeriveInput { ident, data, generics, .. }: DeriveInput) -> Result<
                         }
                     });
 
-                let head = format!(" | {{\n    tag: \"{}\",\n    value: {{",variant.ident);
+                let head = format!(" | {{\n    tag: \"{}\",\n    value: {{\n",variant.ident);
                 quote! {
                     buffer.push_str(#head);
                     #(#fields)*
