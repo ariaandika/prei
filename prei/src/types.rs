@@ -33,6 +33,13 @@ impl Type for bool {
     }
 }
 
+impl<T: Type> Type for Option<T> {
+    fn gen_type_to(buffer: &mut String) {
+        T::gen_type_to(buffer);
+        buffer.push_str(" | null");
+    }
+}
+
 macro_rules! impl_number {
     ($n:ty) => {
         impl Type for $n {
@@ -88,6 +95,21 @@ macro_rules! impl_wrapper {
     };
 }
 
+macro_rules! impl_tuple {
+    ($($t:tt),*) => {
+        impl<$($t: Type),*> Type for ($($t),*) {
+            fn gen_type_to(buffer: &mut String) {
+                buffer.push_str("[");
+                $(
+                    $t::gen_type_to(buffer);
+                    buffer.push_str(",");
+                )*
+                buffer.push_str("]");
+            }
+        }
+    };
+}
+
 impl_number!(u8);
 impl_number!(u16);
 impl_number!(u32);
@@ -117,10 +139,19 @@ impl_wrapper!(std::sync::Arc<T>);
 impl_wrapper!(std::sync::Mutex<T>);
 impl_wrapper!(std::sync::RwLock<T>);
 
-impl<T: Type> Type for Option<T> {
-    fn gen_type_to(buffer: &mut String) {
-        T::gen_type_to(buffer);
-        buffer.push_str(" | null");
-    }
-}
+impl_tuple!(T1, T2);
+impl_tuple!(T1, T2, T3);
+impl_tuple!(T1, T2, T3, T4);
+impl_tuple!(T1, T2, T3, T4, T5);
+impl_tuple!(T1, T2, T3, T4, T5, T6);
+impl_tuple!(T1, T2, T3, T4, T5, T6, T7);
+impl_tuple!(T1, T2, T3, T4, T5, T6, T7, T8);
+impl_tuple!(T1, T2, T3, T4, T5, T6, T7, T8, T9);
+impl_tuple!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10);
+impl_tuple!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11);
+impl_tuple!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12);
+impl_tuple!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13);
+impl_tuple!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14);
+impl_tuple!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15);
+impl_tuple!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16);
 
