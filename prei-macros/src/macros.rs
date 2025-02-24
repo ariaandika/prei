@@ -14,6 +14,7 @@ pub fn parse_derive(input: DeriveInput) -> Result<TokenStream> {
 fn parse_struct(data: DataStruct, input: DeriveInput) -> Result<TokenStream> {
     let ident = &input.ident;
     let ident_str = input.ident.to_string();
+    let head = format!("export type {ident_str} = ");
 
     let generated = match &data.fields {
         Fields::Named(fields) => {
@@ -24,17 +25,17 @@ fn parse_struct(data: DataStruct, input: DeriveInput) -> Result<TokenStream> {
                 .zip(&data.fields)
                 .map(|(id, e)| {
                     let ty = &e.ty;
+                    let head = format!("  {id}: ");
                     quote! {
-                        buffer.push_str("  ");
-                        buffer.push_str(#id);
-                        buffer.push_str(": ");
+                        buffer.push_str(#head);
                         <#ty as #TsType>::gen_id_to(buffer);
                         buffer.push_str(",\n");
                     }
                 });
 
+            let head = format!("{head}{{\n");
             quote! {
-                buffer.push_str("{\n");
+                buffer.push_str(#head);
                 #(#fields)*
                 buffer.push_str("};\n");
             }
@@ -42,6 +43,7 @@ fn parse_struct(data: DataStruct, input: DeriveInput) -> Result<TokenStream> {
         Fields::Unnamed(fields) if fields.unnamed.len() == 1 => {
             let ty = fields.unnamed.first().expect("one");
             quote! {
+                buffer.push_str(#head);
                 <#ty as #TsType>::gen_id_to(buffer);
                 buffer.push_str(";\n");
             }
@@ -54,16 +56,20 @@ fn parse_struct(data: DataStruct, input: DeriveInput) -> Result<TokenStream> {
                     buffer.push_str(",");
                 }
             });
+            let head = format!("{head}[");
             quote! {
-                buffer.push('[');
+                buffer.push_str(#head);
                 #(#fields)*;
                 buffer.push_str("];\n");
             }
         }
-        Fields::Unit => quote! { null; },
+        Fields::Unit => {
+            let head = format!("{head}null;");
+            quote! {
+                buffer.push_str(#head);
+            }
+        },
     };
-
-    let head = format!("export type {ident_str} = ");
 
     Ok(quote! {
         #[cfg(debug_assertions)]
@@ -73,7 +79,6 @@ fn parse_struct(data: DataStruct, input: DeriveInput) -> Result<TokenStream> {
             }
 
             fn gen_type_to(buffer: &mut String) {
-                buffer.push_str(#head);
                 #generated;
             }
         }
